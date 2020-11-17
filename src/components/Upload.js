@@ -1,28 +1,39 @@
 import React, { useRef } from "react";
-import S3 from "react-aws-s3";
+import AWS from 'aws-sdk'
 
 function Upload() {
+
   const fileInput = useRef();
   const handleClick = (event) => {
     event.preventDefault();
     let file = fileInput.current.files[0];
     let newFileName = fileInput.current.files[0].name.replace(/\..+$/, "");
-    const config = {
-      bucketName: process.env.REACT_APP_BUCKET_NAME,
-      dirName: process.env.REACT_APP_DIR_NAME /* optional */,
-      region: process.env.REACT_APP_REGION,
-      accessKeyId: process.env.REACT_APP_ACCESS_ID,
-      secretAccessKey: process.env.REACT_APP_ACCESS_KEY,
-    };
-    const ReactS3Client = new S3(config);
-    ReactS3Client.uploadFile(file, newFileName).then((data) => {
-      console.log(data);
-      if (data.status === 204) {
-        console.log("success");
-      } else {
-        console.log("fail");
+    AWS.config.update({
+      accessKeyId: 'AKIAZSE2BSIWWF7I2Z4T',
+      secretAccessKey: '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',
+    })
+    const myBucket = new AWS.S3({
+      params: { Bucket: 'testsubha/test'},
+      region: 'us-east-1',
+    })
+    const params = {
+        ACL: 'public-read',
+        Key: newFileName,
+        ContentType: file.type,
+        Body: file,
       }
-    });
+    myBucket.putObject(params)
+        .on('httpUploadProgress', (evt) => {
+          // that's how you can keep track of your upload progress
+          this.setState({
+            progress: Math.round((evt.loaded / evt.total) * 100),
+          })
+        })
+        .send((err) => {
+           if (err) {
+             // handle the error here
+           }
+        });
   };
   return (
     <>
